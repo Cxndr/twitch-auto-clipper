@@ -1,0 +1,120 @@
+COMMIT:
+
+# TODO: MAKE LOGGER MODES - "Funny" to track laughing emotes (OMEGALUL, LUL, KEKW, etc.)
+
+# TODO: RENAME main.py TO run.py
+    - more intuitive name, describes what it is much better.
+    - how to implement this with github?
+        - is it as simple as making change locally and git push-ing? or do we need to make changes to the repo?
+        - i think pycharm will manage this for us, but should learn how to accomplish manually.
+
+# TODO: TRACKER IS RE-INITIALIZING EVERY LOOP, DO WE ONLY WANT TO REASSESS TICK LENGTH WHEN STARTING PROGRAM OR WHEN NEW CHANNEL COMES ONLINE?
+
+# TODO: SET MINIMUM AND MAXIMUM TICK LENGTH IN CASE OF A PROGRAM ERROR.
+    - if code accidentally causes extremely low tick rate could the program run too fast and cause issues with api calls or hardware overload? - research
+
+# TODO: REFACTOR ALL LOGGERS INTO ONE WRITE_LOG FUNCTION THAT ACCEPTS A STRING TO LOG AND ANY NUMBER OF LOG TYPES.
+    eg. write_log("example", main, event, channel, console)
+
+# TODO: IMPLEMENT OPTIONAL CUSTOM CLIP TRIGGER VALUES FOR TARGET_CHANNELS.TXT
+    - allows us to dial in precise rates for individual streams
+    - it seems as though individual channels have very different chat speeds for both normal activity and clippable activity
+    ie: channel "atmosphere" or "culture" being different on different channels means what is "clippable" will happen at
+    different ratios for different channels.
+    - could we just impplement this automatically? it seems like very large channels have a smaller spike for good clip (1.5)
+    especially for big channels that have just come online. Then medium channels (300-5000) needs a harsher rate (2.0),
+    and very small channels (<300) may only get a 1.3 or 1.4 increase with even the best clips.
+
+# TODO IF WE ARE PLANNING TO BE RUN PERMANTENTLY DO WE NEED A DAILY RESET POINT?
+    - resets chat count values back to 0, is this nessecary? are big numbers a problem? - research.
+
+# TODO: DO WE NEED A GOOD WAY TO STOP OUR PROGRAM?
+    - running in an infinite while True loop seems like bad practice.
+    - should probably be using a start and stop function somehow
+
+# TODO: WHY ARE WE STILL CLIPPING CHANNELS WHEN OFFLINE? (KNUT, MIZKIF) IS IGNORE OFFLINE CHANNELS NOT WORKING HERE?
+
+# TODO: CAN WE AVOID CHAT VOTING (1's for this, 2's for that).
+    - could be as simple as ignoring messages that contain only "1" or "2"
+    - make sure to account for "11111111" and "222222" as well.
+    - are there any other way's people commonly conduct votes in chat?
+    - ALSO ! commands (anything with ! at start) as sometimes people will spam these for channel interactions.
+    Recent hearthstone expansion launch where streamers had an onscreen gaphic if enough people spammed !sunkencity
+
+# TODO: CAN WE AVOID RAIDS?
+    - Raids are rarely moments worth clipping and will clog up records with unnecessary clips.
+    - We could detect raids through api?
+    - if not could a much weaker option could be to detect chatbot messages, wouldn't be a great solution though as people
+    use different bots and some may not use any bots at all.
+
+# TODO: CAN WE AVOID CHANNEL INTROS?
+    - everytime gappyv starts stram several "starting soon!" clips get triggered because people spam his chat on stream start.
+    - also a problem with jonzherkas stream, massive intial hit of 9.4 increase.
+    - is this just a problem with channels that have previously been online, gone offline and then come back online
+    while the program was running? - has this already been fixed by initializing channel tracking variables when they
+    go online or offline?
+        - test it out, but this should be fixed by initializing as the trap length gets reset and then needs to be
+        refilled until is reaches chat_count_trap_time which should avoid the big increase upon initially going online.
+
+# TODO: CAN WE AVOID SUBSCRIPTION SPAM FROM BOTS LIKE STREAMELEMENTS?
+    - If someone gift a lot of subs, this isn't generally a very clippable moment but if the streamer is using
+    streamelements or a similar bot to print "xx just subscribed.", this will trigger clips.
+    - What other bots do we need to look for?
+    SOLUTION: New System to exclude specific usernames from chat. Probably based on an ignored_users.txt
+        - Could set this to be channel specific? (ie, ignore a user only on specific channels)
+        Not a common use case but could be useful.
+
+# TODO: WHAT DO WE DO IF INTERNET CONNECTION BREAKS?
+    - currently we keep recieving data but all streams go to no chat messages which fills up the trap with empty chats.
+    when the internet comes back on it will trigger lots of clips because the averages are 0.
+
+# TODO: WHAT DO WE DO IF OUR LOG FILES OR CLIPS.CSV BECOMES TOO BIG TO OPEN?
+    - if the program is designed to run 24/7 then can we implement some level of automatic cleanup?
+        - Consider reducing the amount of logging we are doing by default. Add a specific mode to log full chat.
+            - chat.log is mostly unnessecary (except for some debugging scenarios), as we store individual chats seperately.
+            - clips.log is duplicating a lot of the role of clip.csv. We could move important debugging data to clips.csv
+            or merge into main.log?
+        - Can we auto delete log lines after a certain length of time or file size?
+            - control this from settings or a debug mode?
+
+
+
+*** DONE *** (clean up when items go into commit)
+
+
+
+# TO#DO: WHY DOES IMREALLYIMPORTANT CHANNEL SPAM RANDOM CLIPS EVEN WITH VERY LOW CHAT ACTIVITY?
+    - problem seems to be worse the more channels we are tracking - because it extends the tick length?
+    - Next see if it gets better at faster tick rate? or worse at very slow tick rate.
+    - I think this is to do with a very low tick rate. Now that we have tick tracking stats logged in the chat logs we
+    can take at look at the logs at the time of the clips to see exactly what is happening.
+
+This is fixed by implementing dynamic tick rate.
+
+
+# TO#DO: CAN WE RECORD THE TICK DATA (INCREASE, AVG, ETC.) INTO THE INDIVIDUAL CHANNEL CHAT LOGS?
+    - would help with debugging a lot.
+
+Done
+
+
+# TO#DO: CHANNELS ARE RECORDING LOG WHEN THEY GO OFFLINE BUT NOT WHEN THEY COME ONLINE.
+
+Fixed. See April 20th 2022 Commit.
+
+
+# TO#DO: INVESTIGATE POKELAWLS OFFLINE CLIPPING
+    - on 6th April 3am-6am we made a tonne of clips on Pokelawls channel whilst they were offline and chat was barely moving
+    - why was chat reaching the Inc threshold? did this line up with what is in pokelawls chatlog,
+        - if not then why was inc high enough to trigger clips?
+
+Investigated pokelawls offline clipping. Pokelawls had a relatively active offline chat this night.
+
+
+# TO#DO: MAKE LOGS REVERSED ORDER.
+    - so the most recent log goes to the top of the file.
+    - when writing the log, write it to line 1.
+
+It's very inneficient to write to the start of the file for every log. Computationally we'd have to navigate to start of file every time we log.
+OS's are designed to make appends (to end of file) very fast and efficient. With the amount of logging we are doing this would be a bad idea.
+Better to just reverse the order when opening the file and make sure we aren't making huge file logs.
