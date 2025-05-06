@@ -26,4 +26,4 @@ USER_TOKEN="[the_access_token_from_the_step_above]"`
 5. Load the included .venv (due to expired package usage you must use the one provided)
 `source .venv/bin/activate`
 6. Set the channels you want to target inside the `target_channel.txt` file. You can sort channels into categories using `//CATEGORY_NAME` above a list of channels.
-7. Run `python3 run.py` inside the venv to start the script. Your browser will open with an OAuth authorization and then the script will start running.
+7. Run `python3 run.py` inside the venv to start the script. Your browser will open with an OAuth authorization and then the script will start running. Generated clip links will be added to `clips.csv`.
